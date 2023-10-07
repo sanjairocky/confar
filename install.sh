@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Function to install Python
+install_python() {
+    echo "Installing Python..."
+    # Install Python (you can adjust this based on your OS)
+    sudo apt-get update
+    sudo apt-get install -y python3
+}
+
+# Function to install Pip
+install_pip() {
+    echo "Installing Pip..."
+    # Install Pip (you can adjust this based on your OS)
+    sudo apt-get update
+    sudo apt-get install -y python3-pip
+}
+
+# Function to install confar
+install_confar() {
+    echo "Installing Confar..."
+    pip3 install confar
+}
+
+# Function to upgrade confar
+upgrade_confar() {
+    echo "Upgrading Confar..."
+    pip3 install --upgrade confar
+}
+
+# Check if Python is installed
+if command -v python3 &>/dev/null; then
+    echo "Python is already installed."
+else
+    read -p "Python not found. Do you want to install Python? (y/n): " install_python_choice
+    if [[ $install_python_choice == "y" || $install_python_choice == "Y" ]]; then
+        install_python
+    else
+        echo "Python installation skipped."
+        exit 1  # Abort script
+    fi
+fi
+
+# Check if pip is installed
+if command -v pip3 &>/dev/null; then
+    echo "Pip is already installed."
+else
+    read -p "Pip not found. Do you want to install Pip? (y/n): " install_pip_choice
+    if [[ $install_pip_choice == "y" || $install_pip_choice == "Y" ]]; then
+        install_pip
+    else
+        echo "Pip installation skipped."
+        exit 1  # Abort script
+    fi
+fi
+
+# Check if Python and Pip are installed before proceeding
+if command -v python3 &>/dev/null && command -v pip3 &>/dev/null; then
+    # Check if "confar" is installed
+    if command -v  confar &>/dev/null; then
+        read -p "confar is already installed. Do you want to upgrade it? (y/n): " upgrade_confar
+        if [[ "$upgrade_confar" == "y" || "$upgrade_confar" == "Y" ]]; then
+            upgrade_confar
+        else
+            echo "confar upgrade skipped."
+        fi
+    else
+        install_confar
+    fi
+else
+    echo "Python and/or Pip is not installed. Aborting script."
+    exit 1
+fi
