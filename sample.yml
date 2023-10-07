@@ -1,0 +1,47 @@
+flows:
+  echo:
+    - name: shell exe
+      shell: pwd
+    - name: shell with env
+      shell: echo {$.hello}
+    - name: call if
+      call: if
+  default:
+    - name: calling flow
+      call: echo
+  env:
+    - name: shell with env
+      shell: echo {$.envd}
+    - name: env adding
+      env:
+        envd: ${PWD}-{$.obj[test]}
+    - name: shell with env
+      shell: echo {$.envd}
+  if:
+    - name: conditional flow if
+      if: $.ar and not len($.ar)
+      then:
+        - name: passed hello
+          shell: echo {$.obj[test]}
+  test:
+    - name: conditional flow if .. else
+      if: $.hello
+      then:
+        - name: passed if
+          shell: echo "passed if"
+      else:
+        - name: passed if .. else
+          shell: echo "passed if .. else"
+    - name: conditional flow else .. if .. else
+      if: $.hello
+      then:
+        - name: passed hello
+          shell: echo "passed hello"
+      else:
+        - if: $.hello
+          then:
+            - name: passed if .. else
+              shell: echo "passed if .. else"
+          else:
+            - name: passed hello
+              shell: echo "passed hello"
