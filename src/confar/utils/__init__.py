@@ -1,5 +1,5 @@
 from .parser import ParserFactory
-from .Map import Map
+from .map import Map
 
 __all__ = [
     'Map', 'ParserFactory'

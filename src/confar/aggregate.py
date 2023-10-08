@@ -17,4 +17,10 @@ class Aggregator:
         # Parse the input file using the selected parser
         parsed_data = parser.parse(file_path)
 
+        if 'name' not in parsed_data:
+            raise KeyError('name is mandatory field')
+
+        if 'id' not in parsed_data:
+            raise KeyError('id is mandatory field')
+
         return parsed_data
