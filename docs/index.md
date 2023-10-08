@@ -1,140 +1,50 @@
-# Flow Configuration YAML Documentation
+# Confar
 
-This documentation explains the structure of a YAML file used for configuring flows. The YAML file includes various flow configurations under the flows key.
+![GitHub Workflow Status (with event)](https://img.shields.io/github/actions/workflow/status/sanjairocky/Confar/pages%2Fpages-build-deployment)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 
-## Flows
+"Configuration Aggregator and Runner" is an application that consolidates configuration data and executes tasks or processes based on that configuration.
 
-The flows section defines different flow configurations, each identified by a unique name. Each flow consists of a list of steps that define the sequence of actions to be executed.
+Confar is a Python CLI and library for configuration management, designed to aggregate and manage configuration data and execute tasks based on that configuration.
 
-### Example:
+## Table of Contents
 
-```yaml
-flows:
-  echo:
-    - name: shell exe
-      shell: pwd
-    # ...
-  default:
-    - name: calling flow
-      call: echo
-    # ...
-  # ...
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Installation
+
+You can install Confar via pip:
+
+```bash
+pip install confar
 ```
 
-- flows (Dictionary): This section contains flow configurations, each with a unique name.
-  - Flow Name (Dictionary Key): The name of the flow configuration.
-    - name (String): The name of the step within the flow.
-    - shell (String): A shell command to execute in this step.
-    - call (String): Name of the sub-flow to call in this step.
-    - if (Dictionary): A conditional block specifying whether to execute this step based on conditions.
-    - then (List): A list of steps to execute if the condition is true.
-    - else (List): A list of steps to execute if the condition is false.
+## Usage
 
-## Default Flow
+### CLI
 
-The default flow is a special flow that defines the steps to execute when no specific flow is specified. It is used as a fallback.
-
-## Environment (env)
-
-The env section defines environment variables that can be used within steps of the flows.
-
-### Example
-
-```yaml
-env:
-  - name: shell with env
-    shell: echo {$.envd}
-  - name: env adding
-    env:
-      envd: ${PWD}-{$.obj[test]}
-  - name: shell with env
-    shell: echo {$.envd}
+```bash
+confar <command> [options]
 ```
 
-- env (List): This section contains a list of environment variable configurations.
-  - name (String): The name of the environment variable.
-  - shell (String): A shell command that uses the environment variable.
+### Library
 
-## Conditionals (if)
+```python
+import confar
 
-The if section defines conditional statements that determine whether to execute certain steps based on conditions.
-
-### Example:
-
-```yaml
-if:
-  - name: conditional flow if
-    if: $.ar and not len($.ar)
-    then:
-      - name: passed hello
-        shell: echo {$.obj[test]}
+# library usage
 ```
 
-- if (List): This section contains a list of conditional block configurations.
-  - name (String): A name for the conditional block.
-  - if (String): The condition to evaluate. It uses JSONPath expressions.
-  - then (List): A list of steps to execute if the condition is true.
-  - else (List): A list of steps to execute if the condition is false.
+For detailed documentation and examples, refer to the [Library documentation](https://sanjairocky.github.io/confar/usage).
 
-## Over All Example
+## Contributing
 
-```yaml
-# Scenario 1: Basic Shell Commands
-flows:
-  echo:
-    - name: shell exe
-      shell: pwd
-    - name: shell with env
-      shell: echo {$.hello}
+We welcome contributions from the community. If you'd like to contribute to Confar, please read our [Contributing Guidelines and Code of Conduct](https://sanjairocky.github.io/confar/contributing).
 
-# Scenario 2: Conditional Flows
-if:
-  - name: conditional flow if
-    if: $.ar and not len($.ar)
-    then:
-      - name: passed hello
-        shell: echo {$.obj[test]}
+## License
 
-  - name: conditional flow if .. else
-    if: $.hello
-    then:
-      - name: passed if
-        shell: echo "passed if"
-    else:
-      - name: passed if .. else
-        shell: echo "passed if .. else"
-
-  - name: conditional flow else .. if .. else
-    if: $.hello
-    then:
-      - name: passed hello
-        shell: echo "passed hello"
-    else:
-      - if: $.hello
-        then:
-          - name: passed if .. else
-            shell: echo "passed if .. else"
-        else:
-          - name: passed hello
-            shell: echo "passed hello"
-
-# Scenario 3: Sub-Flows (including Default Flow)
-flows:
-  default:
-    - name: calling flow
-      call: echo
-    - name: another step
-      shell: echo "Another step in the default flow"
-
-# Scenario 4: Environment Variables
-env:
-  - name: shell with env
-    shell: echo {$.envd}
-  - name: env adding
-    env:
-      envd: ${PWD}-{$.obj[test]}
-  - name: shell with env
-    shell: echo {$.envd}
-```
-
-This documentation provides an overview of the structure and purpose of the YAML configuration file used for defining flows and their associated actions. It can serve as a reference for users or developers working with these configurations.
+Confar is licensed under the MIT License - [see the LICENSE file for details](https://opensource.org/license/mit/).
