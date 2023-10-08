@@ -1,4 +1,5 @@
 from .utils.parser import ParserFactory
+from uuid import uuid4 as uuid
 
 
 class Aggregator:
@@ -21,6 +22,6 @@ class Aggregator:
             raise KeyError('name is mandatory field')
 
         if 'id' not in parsed_data:
-            raise KeyError('id is mandatory field')
+            parsed_data['id'] = str(uuid())
 
         return parsed_data
