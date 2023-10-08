@@ -5,8 +5,11 @@ flows:
   echo:
     - name: shell exe
       shell: pwd
+    - name: env adding
+      env:
+        envd: ${PWD}
     - name: shell with env
-      shell: echo {$.hello}
+      shell: ls {$.envd}
     - name: call if
       call: if
   default:

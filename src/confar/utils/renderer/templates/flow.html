@@ -30,10 +30,10 @@
           {{ flow.name }}
         </h5>
         {% if flow.cmd %}
-        <span>$ {{flow.cmd}}</span>
-        {% endif%} {% if flow.result %} {% for res in flow.result %}
-        <pre class="value">{{res}}</pre>
-        {% endfor %} {% endif%} {% if flow.error %}
+        <pre>$ {{flow.cmd}}</pre>
+        {% endif%} {% if flow.result %}
+        <pre class="value">{{flow.result}}</pre>
+        {% endif%} {% if flow.error %}
         <pre class="value">{{flow.error}}</pre>
         {% endif%} {% if flow.flows %}
         <ul class="node open">
