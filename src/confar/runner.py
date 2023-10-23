@@ -1,76 +1,100 @@
-import subprocess
-
-from .utils import Map
+from .utils import Map, EventEmitter, Shell
 from uuid import uuid4 as uuid
-import copy
 
 
-class Runner:
+class Runner(EventEmitter):
     def __init__(self, data: dict) -> None:
+        super().__init__()
         self.ctx: Map = Map({})
         self.data = data
-        self.seq = []
 
-    def execute_step(self, step):
+    def execute_step(self, step, flow_id, confar_id):
         _id = str(uuid())
-        result = {'id': _id, 'name': step['name']}
+        error = False
+        self.emit(
+            's-start', {'id': _id, 'name': step['name'], 'flow_id': flow_id, 'confar_id': confar_id})
         try:
             if 'skip' in step and step['skip']:
-                result['result'] = 'step skipped'
-                self.seq.append(result)
+                self.emit('s-data', {'id': _id, 'data': "$ skip_step",
+                          'flow_id': flow_id, 'confar_id': confar_id})
+                self.emit('s-data', {'id': _id, 'data': "step skipped",
+                          'flow_id': flow_id, 'confar_id': confar_id})
             elif 'env' in step:
-                result['cmd'] = []
                 for k, v in step['env'].items():
                     self.ctx[k] = str(str(v).replace(
                         '{$.', '{')).format(**self.ctx.__dict__)
-                    result['cmd'].append(f"export {k} = {self.ctx[k]}")
-                result['result'] = 'added env'
-                self.seq.append(result)
+                    cmd = f"export {k} = {self.ctx[k]}"
+                    self.emit('s-data', {'id': _id, 'data': f"$ {cmd}",
+                                         'flow_id': flow_id, 'confar_id': confar_id})
+                self.emit('s-data', {'id': _id, 'data': 'added env',
+                          'flow_id': flow_id, 'confar_id': confar_id})
             elif 'shell' in step:
-                if type(step['shell']) is not list:
-                    raise ValueError('Shell command must be in list')
-                text = [str(str(s).replace(
-                    '{$.', '{')).format(**self.ctx.__dict__) for s in step['shell']]
-                result['cmd'] = f'Executing shell cmd : {text}'
-                result['result'] = (subprocess.getoutput(
-                    text, encoding='UTF-8')).splitlines()
-                self.seq.append(result)
+                self.emit('s-data', {'id': _id, 'data': f"$ {step['shell']}",
+                          'flow_id': flow_id, 'confar_id': confar_id})
+                shell = Shell(cmd=str(str(step['shell']).replace(
+                    '{$.', '{')).format(**self.ctx.__dict__))
+                shell.on('data', lambda d: self.emit(
+                    's-data', {'id': _id, 'data': d.data, 'flow_id': flow_id, 'confar_id': confar_id}))
+                if shell.run():
+                    raise KeyError('shell cmd failed')
             elif 'call' in step:
-                result['cmd'] = f'Invoking confar sub-flow : {step["call"]}'
-                self.seq.append(copy.copy(result))
-                result['flows'] = self.execute_steps(flow=step['call'])
+                self.emit(
+                    's-data', {'id': _id, 'data': f"$ call {step['call']}",
+                               'flow_id': flow_id, 'confar_id': confar_id})
+                self.execute_steps(
+                    flow=step['call'], confar_id=confar_id, flow_id=flow_id)
             elif 'if' in step:
-                self.seq.append(copy.copy(result))
                 if eval(str(step['if']).replace('$.', 'self.ctx.__dict__.')):
-                    result['flows'] = [self.execute_step(step=the)
-                                       for the in step['then']]
+                    self.emit(
+                        's-data', {'id': _id, 'data': "$ invoke_if_steps",
+                                   'flow_id': flow_id, 'confar_id': confar_id})
+                    for the in step['then']:
+                        self.execute_step(
+                            step=the, flow_id=flow_id, confar_id=confar_id)
                 elif 'else' in step:
-                    result['flows'] = [self.execute_step(step=the)
-                                       for the in step['else']]
+                    self.emit(
+                        's-data', {'id': _id, 'data': "$ invoke_else_steps",
+                                   'flow_id': flow_id, 'confar_id': confar_id})
+                    for the in step['else']:
+                        self.execute_step(
+                            step=the, flow_id=flow_id, confar_id=confar_id)
                 else:
-                    result['result'] = 'step skipped'
+                    self.emit('s-data', {'id': _id, 'data': "skiped if_step",
+                                         'flow_id': flow_id, 'confar_id': confar_id})
         except Exception as e:
             if 'catch' in step:
-                result['flows'] = [self.execute_step(step=the)
-                                   for the in step['catch']]
-                result["cmd"] = f"Invoking catch flow due to error : {str(e)}"
+                self.emit('s-error', {'id': _id, 'data': f"$ invoke_catch_steps : {str(e)}",
+                                      'flow_id': flow_id, 'confar_id': confar_id})
+                for the in step['catch']:
+                    self.execute_step(
+                        step=the, flow_id=flow_id, confar_id=confar_id)
             else:
-                result['error'] = f'error : {str(e)}'
-                if self.seq[len(self.seq)-1]['id'] == _id:
-                    self.seq.pop()
-                    self.seq.append(copy.copy(result))
 
-        return result
+                self.emit('s-error', {'id': _id, 'data': str(e),
+                                      'flow_id': flow_id, 'confar_id': confar_id})
+                error = True
+        self.emit('s-end', {'id': _id, 'name': step['name'],
+                            'flow_id': flow_id, 'confar_id': confar_id})
+        return error
 
-    def execute_steps(self, flow='default'):
-        result = []
+    def execute_steps(self, confar_id: str, flow='default', flow_id=None):
+        _id = str(uuid())
+        self.emit('f-start', {'id': _id, 'confar_id': confar_id, 'flow_id': flow_id,
+                  'name': flow})
         for step in self.data['flows'][flow]:
-            res = self.execute_step(step=step)
-            result.append(res)
-            if 'error' in res:
+            if self.execute_step(
+                    step=step, flow_id=_id, confar_id=confar_id):
                 break
+        self.emit('f-end', {'id': _id, 'name': flow,
+                  'flow_id': flow_id, 'confar_id': confar_id})
 
-        return result
-
-    def execute_flow(self, flow='default'):
-        return {'id': self.data['id'], 'name': self.data['name'], 'flows': self.execute_steps(flow=flow), 'seq': self.seq}
+    def execute_flow(self, confar_id: str, flow: str):
+        if not confar_id:
+            raise KeyError('Configuration id is required!')
+        if not flow:
+            raise KeyError('Bootstrap flow is required!')
+        self.emit('c-start', {'id': confar_id,
+                  'data': f"$ invoke_config {self.data['name']}"})
+        self.execute_steps(flow=flow, confar_id=confar_id)
+        self.emit('c-end', {'id': confar_id, 'name': self.data['name']})
+        return self

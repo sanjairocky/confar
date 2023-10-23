@@ -20,7 +20,7 @@ def parse(file_path: str):
 def run(file_path: str, flow: str = 'default'):
     config = Aggregator().parse_file(file_path)
 
-    result = Runner(config).execute_flow(flow=flow)
+    result = Runner(config).execute_flow(flow=flow, confar_id=config['id'])
 
     # Write the rendered HTML to an output file or use it as needed
     with open(f'{result["id"]}.json', 'w') as output_file:
