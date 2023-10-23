@@ -3,44 +3,33 @@ id: 123
 flows:
   echo:
     - name: shell exe
-      shell:
-        - pwd
+      shell: pwd
   default:
     - name: calling flow
       call: test
   env:
     - name: shell with env
-      shell:
-        - echo
-        - "{$.envd}"
+      shell: echo "{$.envd}"
     - name: env adding
       env:
         envd: ${PWD}-{$.obj[test]}
     - name: shell with env
-      shell:
-        - echo
-        - "{$.envd}"
+      shell: echo "{$.envd}"
   if:
     - name: conditional flow if
       if: $.ar and not len($.ar)
       then:
         - name: passed hello
-          shell:
-            - echo
-            - "{$.obj[test]}"
+          shell: echo "{$.obj[test]}"
   test:
     - name: conditional flow if .. else
       if: $.hello
       then:
         - name: passed if
-          shell:
-            - echo
-            - "passed if"
+          shell: echo "passed if"
       else:
         - name: passed if .. else
-          shell:
-            - echo
-            - "passed if .. else"
+          shell: echo "passed if .. else"
       catch:
         - name: conditional flow catch
           call: echo
@@ -48,19 +37,13 @@ flows:
       if: $.hello
       then:
         - name: passed hello
-          shell:
-            - echo
-            - "passed hello"
+          shell: echo "passed hello"
       else:
         - name: conditional flow if .. else ... if
           if: $.hello
           then:
             - name: passed if .. else
-              shell:
-                - echo
-                - "passed if .. else"
+              shell: echo "passed if .. else"
           else:
             - name: passed hello
-              shell:
-                - echo
-                - "passed else hello"
+              shell: echo "passed else hello"

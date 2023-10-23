@@ -21,7 +21,4 @@ class Aggregator:
         if 'name' not in parsed_data:
             raise KeyError('name is mandatory field')
 
-        if 'id' not in parsed_data:
-            parsed_data['id'] = str(uuid())
-
         return parsed_data

@@ -1,0 +1,8 @@
+name: Sample flow to test application
+id: 123
+flows:
+  default:
+    - name: echo
+      shell: echo ${PWD}
+    - name: shell
+      shell: docker build . -t sanjai/test-rocky:confar
